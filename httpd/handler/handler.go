@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	_ "reflect"
 	"time"
 )
 
@@ -59,28 +60,44 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(req)
 }
 
-// AddFriend adds a friend to a user in the db
-func AddFriend(w http.ResponseWriter, r *http.Request) {
+// GetFriends adds a friend to a user in the db
+func GetFriends(w http.ResponseWriter, r *http.Request) {
 	var req dbmodels.FriendRequest
 	fmt.Println("AddFriend")
 	json.NewDecoder(r.Body).Decode(&req)
-	err := collectionMessages.FindOne(context.TODO(), bson.D{}).Decode(&req)
-	fmt.Println(err)
-	// insertResult, err := collectionMessages.InsertOne(context.TODO(), req)
-	fmt.Println("Found : ")
+	fmt.Println("Collection", collectionUsers)
+	var result bson.M
+	filter := bson.M{"name": req.User}
+	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&result)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-	fmt.Println("Endpoint hit: all friend endpoint")
+	fmt.Println("Found result: ", result["friends"])
+	// insertResult, err := collectionMessages.InsertOne(context.TODO(), req)
 
-	json.NewEncoder(w).Encode(req)
+	json.NewEncoder(w).Encode(result["friends"])
 }
 
 // HomePage ...
 func HomePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage Endpoint HIt")
 }
+
+// func GetFriends(w http.ResponseWriter, r *http.Request) {
+// 	var req dbmodels.UserModel
+// 	fmt.Println("AddMessage")
+// 	json.NewDecoder(r.Body).Decode(&req)
+// 	insertResult, err := collectionUsers.FindOne(context.TODO(), req)
+//
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+// 	fmt.Println("Endpoint hit: all user endpoint")
+//
+// 	json.NewEncoder(w).Encode(req)
+// }
 
 // Mongodb types
 // *mongo.Database
@@ -118,4 +135,5 @@ func Connect() {
 
 	database = client.Database("test")
 	collectionMessages = database.Collection("postmessages")
+	collectionUsers = database.Collection("postusers")
 }

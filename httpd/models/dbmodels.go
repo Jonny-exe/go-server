@@ -28,3 +28,9 @@ type FriendRequest struct {
 	User      string `json:"User"`
 	NewFriend string `json:"NewFriend"`
 }
+
+// FriendResult ...
+type FriendResult struct {
+	User    string   `json:"User"`
+	Friends []string `json:"Friends"`
+}

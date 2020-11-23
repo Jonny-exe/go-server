@@ -19,8 +19,9 @@ func handleRequest() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", handler.HomePage).Methods("POST")
 	myRouter.HandleFunc("/addmessage", handler.AddMessage).Methods("POST")
-	myRouter.HandleFunc("/addfriend", handler.AddFriend).Methods("POST")
+	myRouter.HandleFunc("/getfriends", handler.GetFriends).Methods("POST")
 	myRouter.HandleFunc("/adduser", handler.AddUser).Methods("POST")
+	// myRouter.HandleFunc("/getfriends", handler.GetFriends).Methods("POST")
 
 	fmt.Println("Listening on port 8000")
 	log.Fatal(http.ListenAndServe(":8000", myRouter))
