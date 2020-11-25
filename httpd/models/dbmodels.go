@@ -4,33 +4,38 @@ import "time"
 
 // MessageModel is the data model for the mongodb saved messages
 type MessageModel struct {
-	Sender   string    `json:"Sender"`
-	Receiver string    `json:"Receiver"`
-	Content  string    `json:"Content"`
-	Date     time.Time `json:"Time"`
+	Sender   string    `json:"sender"`
+	Receiver string    `json:"receiver"`
+	Content  string    `json:"content"`
+	Date     time.Time `json:"time"`
 }
 
 // MessageRequest is the data model for the request messages
 type MessageRequest struct {
-	Sender   string `json:"Sender"`
-	Receiver string `json:"Receiver"`
-	Content  string `json:"Content"`
+	Sender   string `json:"sender"`
+	Receiver string `json:"receiver"`
+	Content  string `json:"content"`
 }
 
 // UserModel is the data model for the user
 type UserModel struct {
-	Name    string   `json:"Name"`
-	Friends []string `json:"Friends"`
+	Name    string   `json:"name"`
+	Friends []string `json:"friends"`
 }
 
 // FriendRequest request model
 type FriendRequest struct {
-	User      string `json:"User"`
-	NewFriend string `json:"NewFriend"`
+	User      string `json:"name"`
+	NewFriend string `json:"newFriend"`
 }
 
 // FriendResult ...
 type FriendResult struct {
-	User    string   `json:"User"`
-	Friends []string `json:"Friends"`
+	Name    string   `json:"name"`
+	Friends []string `json:"friends"`
+}
+
+// GetFriendsRequest ...
+type GetFriendsRequest struct {
+	Name string `json:"name"`
 }
