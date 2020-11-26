@@ -25,7 +25,7 @@ type UserModel struct {
 
 // FriendRequest request model
 type FriendRequest struct {
-	User      string `json:"name"`
+	User      string `json:"user"`
 	NewFriend string `json:"newFriend"`
 }
 
@@ -38,4 +38,10 @@ type FriendResult struct {
 // GetFriendsRequest ...
 type GetFriendsRequest struct {
 	Name string `json:"name"`
+}
+
+// GetWithFilterRequest ...
+type GetWithFilterRequest struct {
+	Sender   string `json:"sender"`
+	Receiver string `json:"receiver"`
 }
