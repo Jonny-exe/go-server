@@ -8,5 +8,6 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/subosito/gotenv v1.2.0
 	go.mongodb.org/mongo-driver v1.4.3
+	golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5
 	labix.org/v2/mgo v0.0.0-20140701140051-000000000287
 )

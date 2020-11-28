@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
 	"net/http"
@@ -31,14 +32,13 @@ func AddMessage(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
-	fmt.Println("Endpoint hit: all articles endpoint")
 
 	json.NewEncoder(w).Encode(model)
 }
 
 // AddUser adds a user to the db
 func AddUser(w http.ResponseWriter, r *http.Request) {
-	var req dbmodels.UserModel
+	var req dbmodels.FriendResult
 	json.NewDecoder(r.Body).Decode(&req)
 	insertResult, err := collectionUsers.InsertOne(context.TODO(), req)
 
@@ -65,6 +65,27 @@ func GetFriends(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("GetFriends: Found result: ", result)
 	json.NewEncoder(w).Encode(result)
+}
+
+func encryptPassword(password string) []byte {
+	log.Println("Test")
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+
+	if err != nil {
+		log.Println(err)
+	}
+	return bytes
+}
+
+func comparePassword(dbpass []byte, pass string) bool {
+	fmt.Println(dbpass, pass)
+	err := bcrypt.CompareHashAndPassword(dbpass, []byte(pass))
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return true
 }
 
 // GetWithFilter gets all the messages from a certain user
@@ -95,6 +116,28 @@ func GetWithFilter(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Found result: ", result)
 	// insertResult, err := collectionMessages.InsertOne(context.TODO(), req)
 
+	json.NewEncoder(w).Encode(result)
+}
+
+// DoesUserExists ...
+func DoesUserExists(w http.ResponseWriter, r *http.Request) {
+	var req dbmodels.GetFriendsRequest
+	json.NewDecoder(r.Body).Decode(&req)
+	filter := bson.M{"name": req.Name}
+	options := &options.CountOptions{}
+	options.SetLimit(1)
+	count, err := collectionUsers.CountDocuments(context.TODO(), filter, options)
+	if err != nil {
+		log.Println(err)
+	}
+	// var result string = "Hi"
+
+	var result bool
+	if count == 0 {
+		result = false
+	} else {
+		result = true
+	}
 	json.NewEncoder(w).Encode(result)
 }
 
