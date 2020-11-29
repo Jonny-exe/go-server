@@ -46,3 +46,9 @@ type GetWithFilterRequest struct {
 	Sender   string `json:"sender"`
 	Receiver string `json:"receiver"`
 }
+
+// LoginRequest ...
+type LoginRequest struct {
+	Name string `json:"name"`
+	Pass string `json:"pass"`
+}

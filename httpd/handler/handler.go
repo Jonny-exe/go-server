@@ -22,8 +22,8 @@ import (
 
 // AddMessage adds users to mongodb database
 func AddMessage(w http.ResponseWriter, r *http.Request) {
-	var req dbmodels.MessageRequest
 	log.Println("AddMessage")
+	var req dbmodels.MessageRequest
 	json.NewDecoder(r.Body).Decode(&req)
 	log.Println(req)
 	model := dbmodels.MessageModel{Sender: req.Sender, Receiver: req.Receiver, Content: req.Content, Date: time.Now()}
@@ -38,8 +38,10 @@ func AddMessage(w http.ResponseWriter, r *http.Request) {
 
 // AddUser adds a user to the db
 func AddUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("AddUser")
 	var req dbmodels.FriendResult
 	json.NewDecoder(r.Body).Decode(&req)
+	log.Println("AddUser: req: ", req)
 	encryptedPass := encryptPassword(req.Pass)
 	req.Pass = string(encryptedPass)
 	insertResult, err := collectionUsers.InsertOne(context.TODO(), req)
@@ -70,7 +72,6 @@ func GetFriends(w http.ResponseWriter, r *http.Request) {
 }
 
 func encryptPassword(password string) []byte {
-	log.Println("Test")
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 
 	if err != nil {
@@ -79,8 +80,31 @@ func encryptPassword(password string) []byte {
 	return bytes
 }
 
+// Login ..
+func Login(w http.ResponseWriter, r *http.Request) {
+	log.Println("Login")
+	var req dbmodels.LoginRequest
+	type Search struct {
+		Pass string `json:"pass"`
+	}
+	var result Search
+
+	json.NewDecoder(r.Body).Decode(&req)
+	log.Println("Login", req)
+	json.NewDecoder(r.Body).Decode(&req)
+	filter := bson.M{"name": req.Name}
+	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&result)
+	var dbpass string = result.Pass
+	if err != nil {
+		log.Println(err)
+	}
+
+	compareResult := comparePassword([]byte(dbpass), req.Pass)
+	json.NewEncoder(w).Encode(compareResult)
+}
+
 func comparePassword(dbpass []byte, pass string) bool {
-	fmt.Println(dbpass, pass)
+	log.Println(dbpass, pass)
 	err := bcrypt.CompareHashAndPassword(dbpass, []byte(pass))
 	if err != nil {
 		log.Println(err)
@@ -183,11 +207,6 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 	json.NewEncoder(w).Encode(updateResult["friends"])
-}
-
-// HomePage ...
-func HomePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Homepage Endpoint HIt")
 }
 
 // Mongodb types
