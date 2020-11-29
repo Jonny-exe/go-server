@@ -32,6 +32,7 @@ type FriendRequest struct {
 // FriendResult ...
 type FriendResult struct {
 	Name    string   `json:"name"`
+	Pass    string   `json:"pass"`
 	Friends []string `json:"friends"`
 }
 

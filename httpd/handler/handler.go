@@ -40,6 +40,8 @@ func AddMessage(w http.ResponseWriter, r *http.Request) {
 func AddUser(w http.ResponseWriter, r *http.Request) {
 	var req dbmodels.FriendResult
 	json.NewDecoder(r.Body).Decode(&req)
+	encryptedPass := encryptPassword(req.Pass)
+	req.Pass = string(encryptedPass)
 	insertResult, err := collectionUsers.InsertOne(context.TODO(), req)
 
 	if err != nil {
