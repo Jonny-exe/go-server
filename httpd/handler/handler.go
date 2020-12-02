@@ -36,6 +36,19 @@ func AddMessage(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(model)
 }
 
+// Test ...
+func Test(w http.ResponseWriter, r *http.Request) {
+	type Request struct {
+		Pass string `json:"pass"`
+	}
+
+	var req Request
+	json.NewDecoder(r.Body).Decode(&req)
+	pass := encryptPassword(req.Pass)
+
+	json.NewEncoder(w).Encode(pass)
+}
+
 // AddUser adds a user to the db
 func AddUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("AddUser")
@@ -84,12 +97,18 @@ func encryptPassword(password string) []byte {
 func Login(w http.ResponseWriter, r *http.Request) {
 	log.Println("Login")
 	var req dbmodels.LoginRequest
+	json.NewDecoder(r.Body).Decode(&req)
+	log.Println("Login: req: ", req)
+	if req.Pass == "" {
+		json.NewEncoder(w).Encode(false)
+		log.Println("Login: returned false because empty password")
+		return
+	}
 	type Search struct {
 		Pass string `json:"pass"`
 	}
 	var result Search
 
-	json.NewDecoder(r.Body).Decode(&req)
 	log.Println("Login", req)
 	json.NewDecoder(r.Body).Decode(&req)
 	filter := bson.M{"name": req.Name}
