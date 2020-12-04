@@ -68,6 +68,22 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(req)
 }
 
+// GetFriendRequests ...
+func GetFriendRequests(w http.ResponseWriter, r *http.Request) {
+	log.Println("AddUser")
+	var req dbmodels.GetFriendsRequest
+	json.NewDecoder(r.Body).Decode(&req)
+	// var result dbmodels.FriendAddRequests
+	result := bson.D{}
+	filter := bson.M{"name": req.Name}
+	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		log.Println(err)
+	}
+
+	json.NewEncoder(w).Encode(result)
+}
+
 // GetFriends gets all the friends from a user
 func GetFriends(w http.ResponseWriter, r *http.Request) {
 	log.Println("GetFriends")

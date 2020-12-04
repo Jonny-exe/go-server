@@ -22,6 +22,7 @@ func handleRequest() {
 	myRouter.HandleFunc("/getwithfilter", handler.GetWithFilter).Methods("POST")
 	myRouter.HandleFunc("/adduser", handler.AddUser).Methods("POST")
 	myRouter.HandleFunc("/doesuserexist", handler.DoesUserExists).Methods("POST")
+	myRouter.HandleFunc("/getfriendrequests", handler.GetFriendRequests).Methods("POST")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:5000"},

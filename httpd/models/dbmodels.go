@@ -31,9 +31,10 @@ type FriendRequest struct {
 
 // FriendResult ...
 type FriendResult struct {
-	Name    string   `json:"name"`
-	Pass    string   `json:"pass"`
-	Friends []string `json:"friends"`
+	Name           string            `json:"name"`
+	Pass           string            `json:"pass"`
+	Friends        []string          `json:"friends"`
+	FriendRequests FriendAddRequests `json:"friendRequests"`
 }
 
 // GetFriendsRequest ...
@@ -51,4 +52,13 @@ type GetWithFilterRequest struct {
 type LoginRequest struct {
 	Name string `json:"name"`
 	Pass string `json:"pass"`
+}
+
+// FriendAddRequests ..
+type FriendAddRequests []FriendAddRequest
+
+// FriendAddRequest ..
+type FriendAddRequest struct {
+	Name string `json:"name"`
+	Date string `json:"date"`
 }
