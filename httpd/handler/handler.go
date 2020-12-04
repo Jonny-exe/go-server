@@ -204,7 +204,7 @@ func DoesUserExists(w http.ResponseWriter, r *http.Request) {
 
 // AddFriend ...
 func AddFriend(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("AddFriends")
+	log.Println("AddFriends")
 
 	// Get
 	var getRequest dbmodels.FriendRequest
@@ -222,8 +222,9 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 	var req dbmodels.FriendRequest
 	var updateResult bson.M
 	json.NewDecoder(r.Body).Decode(&req)
-	var friendsSlice []string = getResult.Friends[0:]
-	friendsSlice = append(friendsSlice, getRequest.NewFriend)
+	// var friendsSlice []string = getResult.Friends[0:]
+	// friendsSlice = append(friendsSlice, getRequest.NewFriend)
+	friendsSlice := appendToArray(getRequest.NewFriend, getResult.Friends)
 
 	fmt.Println(reflect.TypeOf(friendsSlice), friendsSlice)
 	fmt.Println("Req.User: ", getRequest.User)
@@ -241,7 +242,46 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
-	json.NewEncoder(w).Encode(updateResult["friends"])
+
+	addFriendRequest(getRequest.User, getRequest.NewFriend)
+
+	json.NewEncoder(w).Encode(updateResult)
+}
+
+func addFriendRequest(user string, newFriend string) {
+	filter := bson.M{"name": newFriend}
+	var result dbmodels.GetFriendsRequestsResult
+	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println("addFriendRequest: result: ", result)
+	// var friendsSlice []string = getResult.Friends[0:]
+	// friendsSlice = append(friendsSlice, getRequest.NewFriend)
+
+	var newFriendRequest dbmodels.FriendAddRequest
+	newFriendRequest.Name = user
+	var requestsSlice []dbmodels.FriendAddRequest = result.FriendRequests[0:]
+	requestsSlice = append(requestsSlice, newFriendRequest)
+	updateFilter := bson.M{"name": newFriend}
+	update, err := collectionUsers.UpdateOne(context.TODO(), updateFilter,
+		// bson.D{
+		//	{"$set", bson.D{{"friends", friendsSlice}}},
+		// }
+		bson.D{
+			primitive.E{Key: "$set",
+				Value: bson.D{primitive.E{Key: "friendRequests", Value: requestsSlice}}}},
+	)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(update)
+}
+
+func appendToArray(newElement string, array []string) []string {
+	var newSlice []string = array[0:]
+	newSlice = append(newSlice, newElement)
+	return newSlice
 }
 
 // Mongodb types

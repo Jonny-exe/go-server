@@ -59,10 +59,11 @@ type FriendAddRequests []FriendAddRequest
 
 // FriendAddRequest ..
 type FriendAddRequest struct {
-	Name string `json:"name"`
-	Date string `json:"date"`
+	Name string    `json:"name"`
+	Date time.Time `json:"time"`
 }
 
+// GetFriendsRequestsResult ...
 type GetFriendsRequestsResult struct {
 	FriendRequests []FriendAddRequest `json:"friendRequests"`
 }
