@@ -70,13 +70,14 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 
 // GetFriendRequests ...
 func GetFriendRequests(w http.ResponseWriter, r *http.Request) {
-	log.Println("AddUser")
+	log.Println("GetFriendRequest")
 	var req dbmodels.GetFriendsRequest
 	json.NewDecoder(r.Body).Decode(&req)
-	// var result dbmodels.FriendAddRequests
-	result := bson.D{}
+	var result dbmodels.GetFriendsRequestsResult
+	// result := bson.M{}
 	filter := bson.M{"name": req.Name}
 	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&result)
+	fmt.Println("GetFriendRequests: result: ", result)
 	if err != nil {
 		log.Println(err)
 	}

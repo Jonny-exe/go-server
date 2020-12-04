@@ -62,3 +62,7 @@ type FriendAddRequest struct {
 	Name string `json:"name"`
 	Date string `json:"date"`
 }
+
+type GetFriendsRequestsResult struct {
+	FriendRequests []FriendAddRequest `json:"friendRequests"`
+}
