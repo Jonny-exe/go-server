@@ -287,6 +287,14 @@ func addFriendRequest(user string, newFriend string) {
 	log.Println(update)
 }
 
+// RemoveFriendRequest ...
+func RemoveFriendRequest(w http.ResponseWriter, r *http.Request) {
+	var req dbmodels.NameAndFriendToRemove
+	json.NewDecoder(r.Body).Decode(&req)
+	removeFriendRequests(req.Name, req.FriendToRemove)
+	json.NewEncoder(w).Encode(http.StatusOK)
+}
+
 func removeFriendRequests(user string, requestToRemove string) {
 	var findResult dbmodels.NameAndDateStruct
 	// var result = bson.M{}

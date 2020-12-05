@@ -66,3 +66,9 @@ type NameAndDateStruct struct {
 type Friends struct {
 	Friends []string `json:"friends"`
 }
+
+// NameAndFriendToRemove ...
+type NameAndFriendToRemove struct {
+	Name           string `json:"name"`
+	FriendToRemove string `json:"friendtoremove"`
+}
