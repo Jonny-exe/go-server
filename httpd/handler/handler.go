@@ -88,7 +88,7 @@ func GetFriendRequests(w http.ResponseWriter, r *http.Request) {
 func GetFriends(w http.ResponseWriter, r *http.Request) {
 	log.Println("GetFriends")
 	var req dbmodels.GetFriendsRequest
-	var result bson.M
+	var result dbmodels.Friends
 	json.NewDecoder(r.Body).Decode(&req)
 	log.Println("GetFriends: req ", req)
 	filter := bson.M{"name": req.Name}
@@ -97,7 +97,7 @@ func GetFriends(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 	log.Println("GetFriends: Found result: ", result)
-	json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(result.Friends)
 }
 
 func encryptPassword(password string) []byte {
@@ -124,7 +124,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Pass string `json:"pass"`
 	}
 	var result Search
-
+	log.Println(reflect.TypeOf(result))
 	log.Println("Login", req)
 	json.NewDecoder(r.Body).Decode(&req)
 	filter := bson.M{"name": req.Name}
@@ -202,32 +202,21 @@ func DoesUserExists(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-// AddFriend ...
-func AddFriend(w http.ResponseWriter, r *http.Request) {
-	log.Println("AddFriends")
-
+func addNewFriend(user string, newFriend string) {
 	// Get current friends
-	var getRequest dbmodels.FriendRequest
-	var friends dbmodels.Friends
-	json.NewDecoder(r.Body).Decode(&getRequest)
-	log.Println(getRequest)
-	getFilter := bson.M{"name": getRequest.Name}
-	err := collectionUsers.FindOne(context.TODO(), getFilter).Decode(&friends)
+	var userInfo dbmodels.Friends
+	getFilter := bson.M{"name": user}
+	err := collectionUsers.FindOne(context.TODO(), getFilter).Decode(&userInfo)
 
 	if err != nil {
 		log.Println(err)
 	}
 
 	// Update to new friends
-	var req dbmodels.FriendRequest
-	// var updateResult bson.M
-	json.NewDecoder(r.Body).Decode(&req)
-	friendsSlice := appendToArray(getRequest.NewFriend, friends.Friends)
+	friendsSlice := appendToArray(newFriend, userInfo.Friends)
 
-	fmt.Println(reflect.TypeOf(friendsSlice), friendsSlice)
-	fmt.Println("Req.User: ", getRequest.Name)
-	fmt.Println("FriendSlice: ", friendsSlice)
-	updateFilter := bson.M{"name": getRequest.Name}
+	fmt.Println("addNewFriend: FriendSlice: ", friendsSlice)
+	updateFilter := bson.M{"name": user}
 	update, err := collectionUsers.UpdateOne(context.TODO(), updateFilter,
 		// bson.D{
 		//	{"$set", bson.D{{"friends", friendsSlice}}},
@@ -236,11 +225,25 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 			primitive.E{Key: "$set",
 				Value: bson.D{primitive.E{Key: "friends", Value: friendsSlice}}}},
 	)
-	fmt.Println("Modified count: ", update.ModifiedCount)
+	fmt.Println("addNewFriend: Modified count: ", update.ModifiedCount)
 	if err != nil {
 		log.Println(err)
 	}
-	removeFriendRequests(getRequest.Name, getRequest.NewFriend)
+}
+
+// AddFriend ...
+func AddFriend(w http.ResponseWriter, r *http.Request) {
+	log.Println("AddFriends")
+
+	var req dbmodels.FriendRequest
+	json.NewDecoder(r.Body).Decode(&req)
+
+	// Add eachother to the friend list
+	addNewFriend(req.Name, req.NewFriend)
+	addNewFriend(req.NewFriend, req.Name)
+
+	// Remove the friend request
+	removeFriendRequests(req.Name, req.NewFriend)
 	json.NewEncoder(w).Encode(http.StatusOK)
 }
 
@@ -250,7 +253,6 @@ func AddFriendRequest(w http.ResponseWriter, r *http.Request) {
 	var req dbmodels.FriendRequest
 	json.NewDecoder(r.Body).Decode(&req)
 	addFriendRequest(req.Name, req.NewFriend)
-	log.Println("Return status")
 	json.NewEncoder(w).Encode(http.StatusOK)
 }
 
@@ -285,19 +287,6 @@ func addFriendRequest(user string, newFriend string) {
 	log.Println(update)
 }
 
-// func mongoUpdate(filter, keyToChange) {
-//
-// 	updateFilter := bson.M{"name": user}
-// 	update, err := collectionUsers.UpdateOne(context.TODO(), updateFilter,
-// 		// bson.D{
-// 		//	{"$set", bson.D{{"friends", friendsSlice}}},
-// 		// }
-// 		bson.D{
-// 			primitive.E{Key: "$set",
-// 				Value: bson.D{primitive.E{Key: "friendrequests", Value: newRequests}}}},
-// 	)
-// }
-
 func removeFriendRequests(user string, requestToRemove string) {
 	var findResult dbmodels.GetFriendsRequestsResult
 	// var result = bson.M{}
@@ -326,7 +315,6 @@ func removeFriendRequests(user string, requestToRemove string) {
 	if err != nil {
 		log.Println(err, update)
 	}
-
 }
 
 func findFriendToRemove(requests dbmodels.FriendAddRequests, friendName string) int {
