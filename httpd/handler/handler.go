@@ -206,7 +206,7 @@ func DoesUserExists(w http.ResponseWriter, r *http.Request) {
 func AddFriend(w http.ResponseWriter, r *http.Request) {
 	log.Println("AddFriends")
 
-	// Get
+	// Get current friends
 	var getRequest dbmodels.FriendRequest
 	var getResult dbmodels.FriendResult
 	json.NewDecoder(r.Body).Decode(&getRequest)
@@ -218,12 +218,10 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	// Update
+	// Update to new friends
 	var req dbmodels.FriendRequest
-	var updateResult bson.M
+	// var updateResult bson.M
 	json.NewDecoder(r.Body).Decode(&req)
-	// var friendsSlice []string = getResult.Friends[0:]
-	// friendsSlice = append(friendsSlice, getRequest.NewFriend)
 	friendsSlice := appendToArray(getRequest.NewFriend, getResult.Friends)
 
 	fmt.Println(reflect.TypeOf(friendsSlice), friendsSlice)
@@ -243,22 +241,29 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	addFriendRequest(getRequest.User, getRequest.NewFriend)
+	json.NewEncoder(w).Encode(http.StatusOK)
+}
 
-	json.NewEncoder(w).Encode(updateResult)
+// AddFriendRequest ...
+func AddFriendRequest(w http.ResponseWriter, r *http.Request) {
+	log.Println("AddFriendRequest")
+	var req dbmodels.FriendRequest
+	json.NewDecoder(r.Body).Decode(&req)
+	addFriendRequest(req.User, req.NewFriend)
+	log.Println("Return status")
+	json.NewEncoder(w).Encode(http.StatusOK)
 }
 
 func addFriendRequest(user string, newFriend string) {
+	// Get current requests
 	filter := bson.M{"name": newFriend}
 	var result dbmodels.GetFriendsRequestsResult
 	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		log.Println(err)
 	}
-	log.Println("addFriendRequest: result: ", result)
-	// var friendsSlice []string = getResult.Friends[0:]
-	// friendsSlice = append(friendsSlice, getRequest.NewFriend)
 
+	// Update current requests
 	var newFriendRequest dbmodels.FriendAddRequest
 	newFriendRequest.Name = user
 	var requestsSlice []dbmodels.FriendAddRequest = result.FriendRequests[0:]

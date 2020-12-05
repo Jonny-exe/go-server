@@ -17,6 +17,7 @@ func handleRequest() {
 	myRouter.HandleFunc("/addmessage", handler.AddMessage).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/getfriends", handler.GetFriends).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/addfriend", handler.AddFriend).Methods("POST", "OPTIONS")
+	myRouter.HandleFunc("/addfriendrequest", handler.AddFriendRequest).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/login", handler.Login).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/test", handler.Test).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/getwithfilter", handler.GetWithFilter).Methods("POST")
