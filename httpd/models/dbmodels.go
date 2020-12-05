@@ -2,76 +2,64 @@ package dbmodels
 
 import "time"
 
-// MessageModel is the data model for the mongodb saved messages
-type MessageModel struct {
+// MessageTime is the data model for the mongodb saved messages
+type MessageTime struct {
 	Sender   string    `json:"sender"`
 	Receiver string    `json:"receiver"`
 	Content  string    `json:"content"`
 	Date     time.Time `json:"time"`
 }
 
-// MessageRequest is the data model for the request messages
-type MessageRequest struct {
+// Message is the data model for the request messages
+type Message struct {
 	Sender   string `json:"sender"`
 	Receiver string `json:"receiver"`
 	Content  string `json:"content"`
 }
 
-// UserModel is the data model for the ser
-type UserModel struct {
-	Name    string   `json:"name"`
-	Friends []string `json:"friends"`
-}
-
-// FriendRequest request model
-type FriendRequest struct {
+// NameAndNewFriend request model
+type NameAndNewFriend struct {
 	Name      string `json:"name"`
 	NewFriend string `json:"newFriend"`
 }
 
-// FriendResult ...
-type FriendResult struct {
-	Name           string            `json:"name"`
-	Pass           string            `json:"pass"`
-	Friends        []string          `json:"friends"`
-	FriendRequests FriendAddRequests `json:"friendrequests"`
+// User ...
+type User struct {
+	Name           string           `json:"name"`
+	Pass           string           `json:"pass"`
+	Friends        []string         `json:"friends"`
+	FriendRequests NameAndDateArray `json:"friendrequests"`
 }
 
-// GetFriendsRequest ...
-type GetFriendsRequest struct {
+// Name ...
+type Name struct {
 	Name string `json:"name"`
 }
 
-// GetWithFilterRequest ...
-type GetWithFilterRequest struct {
+// SenderAndReceiver ...
+type SenderAndReceiver struct {
 	Sender   string `json:"sender"`
 	Receiver string `json:"receiver"`
 }
 
-// LoginRequest ...
-type LoginRequest struct {
+// NameAndPass ...
+type NameAndPass struct {
 	Name string `json:"name"`
 	Pass string `json:"pass"`
 }
 
-// FriendAddRequests ..
-type FriendAddRequests []FriendAddRequest
+// NameAndDateArray ..
+type NameAndDateArray []NameAndDate
 
-// FriendAddRequest ..
-type FriendAddRequest struct {
+// NameAndDate ..
+type NameAndDate struct {
 	Name string `json:"name"`
 	Date string `json:"date"`
 }
 
-// GetFriendsRequestsResult ...
-type GetFriendsRequestsResult struct {
-	FriendRequests []FriendAddRequest `json:"friendrequests"`
-}
-
-// RemoveFriendsRequest ..
-type RemoveFriendsRequest struct {
-	Name           string `json:"name"`
-	FriendToRemove string `json:"friendToRemove"`
+// NameAndDateStruct ...
+type NameAndDateStruct struct {
+	FriendRequests []NameAndDate `json:"friendrequests"`
 }
 
 // Friends ..
