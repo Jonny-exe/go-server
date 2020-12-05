@@ -17,7 +17,7 @@ type MessageRequest struct {
 	Content  string `json:"content"`
 }
 
-// UserModel is the data model for the user
+// UserModel is the data model for the ser
 type UserModel struct {
 	Name    string   `json:"name"`
 	Friends []string `json:"friends"`
@@ -25,7 +25,7 @@ type UserModel struct {
 
 // FriendRequest request model
 type FriendRequest struct {
-	User      string `json:"user"`
+	Name      string `json:"name"`
 	NewFriend string `json:"newFriend"`
 }
 
@@ -34,7 +34,7 @@ type FriendResult struct {
 	Name           string            `json:"name"`
 	Pass           string            `json:"pass"`
 	Friends        []string          `json:"friends"`
-	FriendRequests FriendAddRequests `json:"friendRequests"`
+	FriendRequests FriendAddRequests `json:"friendrequests"`
 }
 
 // GetFriendsRequest ...
@@ -59,11 +59,22 @@ type FriendAddRequests []FriendAddRequest
 
 // FriendAddRequest ..
 type FriendAddRequest struct {
-	Name string    `json:"name"`
-	Date time.Time `json:"time"`
+	Name string `json:"name"`
+	Date string `json:"date"`
 }
 
 // GetFriendsRequestsResult ...
 type GetFriendsRequestsResult struct {
-	FriendRequests []FriendAddRequest `json:"friendRequests"`
+	FriendRequests []FriendAddRequest `json:"friendrequests"`
+}
+
+// RemoveFriendsRequest ..
+type RemoveFriendsRequest struct {
+	Name           string `json:"name"`
+	FriendToRemove string `json:"friendToRemove"`
+}
+
+// Friends ..
+type Friends struct {
+	Friends []string `json:"friends"`
 }

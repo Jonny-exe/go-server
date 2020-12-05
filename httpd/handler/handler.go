@@ -208,11 +208,11 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 
 	// Get current friends
 	var getRequest dbmodels.FriendRequest
-	var getResult dbmodels.FriendResult
+	var friends dbmodels.Friends
 	json.NewDecoder(r.Body).Decode(&getRequest)
 	log.Println(getRequest)
-	getFilter := bson.M{"name": getRequest.User}
-	err := collectionUsers.FindOne(context.TODO(), getFilter).Decode(&getResult)
+	getFilter := bson.M{"name": getRequest.Name}
+	err := collectionUsers.FindOne(context.TODO(), getFilter).Decode(&friends)
 
 	if err != nil {
 		log.Println(err)
@@ -222,12 +222,12 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 	var req dbmodels.FriendRequest
 	// var updateResult bson.M
 	json.NewDecoder(r.Body).Decode(&req)
-	friendsSlice := appendToArray(getRequest.NewFriend, getResult.Friends)
+	friendsSlice := appendToArray(getRequest.NewFriend, friends.Friends)
 
 	fmt.Println(reflect.TypeOf(friendsSlice), friendsSlice)
-	fmt.Println("Req.User: ", getRequest.User)
+	fmt.Println("Req.User: ", getRequest.Name)
 	fmt.Println("FriendSlice: ", friendsSlice)
-	updateFilter := bson.M{"name": getRequest.User}
+	updateFilter := bson.M{"name": getRequest.Name}
 	update, err := collectionUsers.UpdateOne(context.TODO(), updateFilter,
 		// bson.D{
 		//	{"$set", bson.D{{"friends", friendsSlice}}},
@@ -240,7 +240,7 @@ func AddFriend(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
-
+	removeFriendRequests(getRequest.Name, getRequest.NewFriend)
 	json.NewEncoder(w).Encode(http.StatusOK)
 }
 
@@ -249,13 +249,14 @@ func AddFriendRequest(w http.ResponseWriter, r *http.Request) {
 	log.Println("AddFriendRequest")
 	var req dbmodels.FriendRequest
 	json.NewDecoder(r.Body).Decode(&req)
-	addFriendRequest(req.User, req.NewFriend)
+	addFriendRequest(req.Name, req.NewFriend)
 	log.Println("Return status")
 	json.NewEncoder(w).Encode(http.StatusOK)
 }
 
 func addFriendRequest(user string, newFriend string) {
 	// Get current requests
+	log.Println("AddFriendRequest", user, newFriend)
 	filter := bson.M{"name": newFriend}
 	var result dbmodels.GetFriendsRequestsResult
 	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&result)
@@ -266,6 +267,7 @@ func addFriendRequest(user string, newFriend string) {
 	// Update current requests
 	var newFriendRequest dbmodels.FriendAddRequest
 	newFriendRequest.Name = user
+	newFriendRequest.Date = time.Now().Format("2006-01-02")
 	var requestsSlice []dbmodels.FriendAddRequest = result.FriendRequests[0:]
 	requestsSlice = append(requestsSlice, newFriendRequest)
 	updateFilter := bson.M{"name": newFriend}
@@ -275,12 +277,73 @@ func addFriendRequest(user string, newFriend string) {
 		// }
 		bson.D{
 			primitive.E{Key: "$set",
-				Value: bson.D{primitive.E{Key: "friendRequests", Value: requestsSlice}}}},
+				Value: bson.D{primitive.E{Key: "friendrequests", Value: requestsSlice}}}},
 	)
 	if err != nil {
 		log.Println(err)
 	}
 	log.Println(update)
+}
+
+// func mongoUpdate(filter, keyToChange) {
+//
+// 	updateFilter := bson.M{"name": user}
+// 	update, err := collectionUsers.UpdateOne(context.TODO(), updateFilter,
+// 		// bson.D{
+// 		//	{"$set", bson.D{{"friends", friendsSlice}}},
+// 		// }
+// 		bson.D{
+// 			primitive.E{Key: "$set",
+// 				Value: bson.D{primitive.E{Key: "friendrequests", Value: newRequests}}}},
+// 	)
+// }
+
+func removeFriendRequests(user string, requestToRemove string) {
+	var findResult dbmodels.GetFriendsRequestsResult
+	// var result = bson.M{}
+	filter := bson.M{"name": user}
+	log.Println("removeFriendRequests: filter", filter)
+	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&findResult)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	log.Println("removeFriendRequests: findResult.FriendRequests", findResult)
+	var indexToRemove int = findFriendToRemove(findResult.FriendRequests, requestToRemove)
+	var newRequests dbmodels.FriendAddRequests = removeIndexFromArray(findResult.FriendRequests, indexToRemove)
+
+	updateFilter := bson.M{"name": user}
+	update, err := collectionUsers.UpdateOne(context.TODO(), updateFilter,
+		// bson.D{
+		//	{"$set", bson.D{{"friends", friendsSlice}}},
+		// }
+		bson.D{
+			primitive.E{Key: "$set",
+				Value: bson.D{primitive.E{Key: "friendrequests", Value: newRequests}}}},
+	)
+
+	if err != nil {
+		log.Println(err, update)
+	}
+
+}
+
+func findFriendToRemove(requests dbmodels.FriendAddRequests, friendName string) int {
+	var requestIndex int
+	for index, request := range requests {
+		if request.Name == friendName {
+			requestIndex = index
+			break
+		}
+	}
+	log.Println("findFriendToRemove: ", requestIndex)
+	return requestIndex
+}
+
+func removeIndexFromArray(requests dbmodels.FriendAddRequests, index int) dbmodels.FriendAddRequests {
+	log.Println("removeIndexFromArray: ", index, requests)
+	return append(requests[:index], requests[index+1:]...)
 }
 
 func appendToArray(newElement string, array []string) []string {
