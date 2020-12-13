@@ -10,6 +10,14 @@ type MessageTime struct {
 	Date     time.Time `json:"time"`
 }
 
+// CropSizes ..
+type CropSizes struct {
+	Y      int `json:"y"`
+	X      int `json:"x"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
 // Message is the data model for the request messages
 type Message struct {
 	Sender   string `json:"sender"`
@@ -23,17 +31,36 @@ type NameAndNewFriend struct {
 	NewFriend string `json:"newFriend"`
 }
 
+// NameAndImage request model
+type NameAndImage struct {
+	Name  string `json:"name"`
+	Image string `json:"image"`
+}
+
+// NameAndImageAndAreaToCrop ..
+type NameAndImageAndAreaToCrop struct {
+	Name       string    `json:"name"`
+	Image      string    `json:"image"`
+	AreaToCrop CropSizes `json:"areatocrop"`
+}
+
 // User ...
 type User struct {
 	Name           string           `json:"name"`
 	Pass           string           `json:"pass"`
 	Friends        []string         `json:"friends"`
 	FriendRequests NameAndDateArray `json:"friendrequests"`
+	ProfileImage   string           `json:"profileimage"`
 }
 
 // Name ...
 type Name struct {
 	Name string `json:"name"`
+}
+
+// Image ...
+type Image struct {
+	ProfileImage string `json:"profileimage"`
 }
 
 // SenderAndReceiver ...

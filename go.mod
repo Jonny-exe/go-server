@@ -3,6 +3,7 @@ module github.com/Jonny-exe/go-server
 go 1.15
 
 require (
+	github.com/anthonynsimon/bild v0.13.0
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.3.0
 	github.com/rs/cors v1.7.0

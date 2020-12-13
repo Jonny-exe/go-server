@@ -14,6 +14,7 @@ import (
 func handleRequest() {
 	handler.Connect()
 	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.HandleFunc("/test", handler.Base64ToImage).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/addmessage", handler.AddMessage).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/getfriends", handler.GetFriends).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/addfriend", handler.AddFriend).Methods("POST", "OPTIONS")
@@ -25,10 +26,13 @@ func handleRequest() {
 	myRouter.HandleFunc("/adduser", handler.AddUser).Methods("POST")
 	myRouter.HandleFunc("/doesuserexist", handler.DoesUserExists).Methods("POST")
 	myRouter.HandleFunc("/getfriendrequests", handler.GetFriendRequests).Methods("POST")
+	myRouter.HandleFunc("/uploadprofileimage", handler.UploadProfileImage).Methods("POST")
+	myRouter.HandleFunc("/getprofileimage", handler.GetProfileImage).Methods("POST")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:5000"},
 		AllowCredentials: true,
+
 		// Enable Debugging for testing, consider disabling in production
 		// To debug turn this to true
 		Debug: false,

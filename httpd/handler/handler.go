@@ -3,8 +3,10 @@ package handler
 // skipping primitive.E
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Jonny-exe/go-server/httpd/defaultimage"
 	"github.com/Jonny-exe/go-server/httpd/models"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,13 +14,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
+	"image"
+	"image/png"
+	"strings"
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
+	"bytes"
+	"github.com/anthonynsimon/bild/transform"
+	_ "image/jpeg" // This is to load the jpeg encoder
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"reflect"
 	"time"
 )
+
+// to install: "go get github.com/anthonynsimon/bild/..."
+// installed it into: /home/a/go/src/github.com/anthonynsimon
 
 // AddMessage adds users to mongodb database
 func AddMessage(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +69,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("AddUser: req: ", req)
 	encryptedPass := encryptPassword(req.Pass)
 	req.Pass = string(encryptedPass)
+	req.ProfileImage = defaultimage.Image
 	insertResult, err := collectionUsers.InsertOne(context.TODO(), req)
 
 	if err != nil {
@@ -83,6 +96,166 @@ func GetFriendRequests(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(result.FriendRequests)
 }
+
+// UploadProfileImage ..
+func UploadProfileImage(w http.ResponseWriter, r *http.Request) {
+	var req dbmodels.NameAndImageAndAreaToCrop
+	log.Println("UploadProfileImage", req)
+	json.NewDecoder(r.Body).Decode(&req)
+	log.Println("UploadProfileImage", req.Name, req.AreaToCrop)
+	image := editImage(req.Image, req.AreaToCrop)
+	updateFilter := bson.M{"name": req.Name}
+
+	update, err := collectionUsers.UpdateOne(context.TODO(), updateFilter,
+		// bson.D{
+		//	{"$set", bson.D{{"profileImage", friendsSlice}}},
+		// }
+		bson.D{
+			primitive.E{Key: "$set",
+				Value: bson.D{primitive.E{Key: "profileimage", Value: image}}}},
+	)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	log.Println(update)
+	json.NewEncoder(w).Encode(http.StatusOK)
+}
+
+func editImage(base64Image string, cropSizes dbmodels.CropSizes) string {
+	// this file read is just for testing, the server does not need this
+	// see https://golang.org/pkg/encoding/base64/
+	var dataenc string
+	var datadec []byte
+
+	// Data to retrun
+	var datacropenc string
+	dataenc = base64Image
+	dataenc = dataenc[strings.IndexByte(dataenc, ',')+1:]
+	// argument data is []byte, exactly what we need
+	// dataenc is what the server receives in the REST API call
+	// a base64 encoded image of any type (JPG, PNG) in a string
+	fmt.Printf("Contents of file (encoded): %v ...\n", string(dataenc)[0:127])
+	datadec, err := base64.StdEncoding.DecodeString(dataenc)
+	if err != nil {
+		log.Println("Decode failed with error: ", err)
+		log.Println(err)
+	} else {
+		log.Printf("Contents of file (decoded): %v ...\n", string(datadec)[0:127])
+		// create an io.Reader for []byte
+		r := bytes.NewReader(datadec)
+		log.Println("Created io.reader for []byte")
+		// Calling the generic image.Decode() will convert the bytes into an image
+		// and give us type of image as a string. E.g. "png"
+		imageData, imageType, err := image.Decode(r)
+		if err != nil {
+			fmt.Println("Decoding image failed with error: ", err)
+			fmt.Println(err)
+		} else {
+			// fmt.Println(imageData) // imageData (type image.Image)
+			fmt.Printf("Image type is '%v'.\n", imageType)
+			// use the coordinates received by server via REST API
+			cropRect := image.Rect(cropSizes.X, cropSizes.Y, cropSizes.X+cropSizes.Width, cropSizes.Y+cropSizes.Height) // image.Rect(x0, y0, x1, y1)
+			imageCropped := transform.Crop(imageData, cropRect)
+
+			// Resize
+			imageCropped = transform.Resize(imageCropped, 256, 256, transform.Linear)
+
+			var b bytes.Buffer
+			w := io.Writer(&b) // create a byte[] io.Writer using buffer
+			// Encode takes a writer interface and an image interface
+			// Since we want a PNG as output we convert to PNG
+			png.Encode(w, imageCropped)
+			imageCroppedString := b.String()
+			imageCroppedBytes := b.Bytes()
+			fmt.Printf("Contents of cropped image (unencoded): %v ...\n", imageCroppedString[0:127])
+			if err != nil {
+				fmt.Println("Write cropped image to file for testing failed with error: ", err)
+				fmt.Println(err)
+			} else {
+				// argument imageCroppedBytes is []byte, exactly what we need
+				datacropenc = base64.StdEncoding.EncodeToString(imageCroppedBytes) // []byte(arg)
+				datacropenc = "data:image/jpeg;base64," + datacropenc
+				// datacropenc is what the server will store in MongoDB,
+				// a cropped PNG image that is base64 encoded stored in a string.
+				fmt.Printf("Contents of cropped PNG image (encoded): %v ...\n", string(datacropenc)[0:127])
+				fmt.Printf("Crop completed successfully.\n")
+				// data:image/jpeg;base64,
+			}
+		}
+	}
+	return datacropenc
+}
+
+// Base64ToImage ...
+func Base64ToImage(w http.ResponseWriter, r *http.Request) {
+	type request struct {
+		Data string `json:"data"`
+	}
+	var req request
+	json.NewDecoder(r.Body).Decode(&req)
+	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(req.Data))
+	log.Println(reader)
+	m, formatString, err := image.Decode(reader)
+	if err != nil {
+		log.Println(err)
+	}
+	bounds := m.Bounds()
+	fmt.Println("base64toJpg", bounds, formatString)
+	log.Println(reflect.TypeOf(m), reflect.TypeOf(formatString))
+	json.NewEncoder(w).Encode(http.StatusOK)
+}
+
+// GetProfileImage ...
+func GetProfileImage(w http.ResponseWriter, r *http.Request) {
+	log.Println("GetProfileImage")
+	var req dbmodels.NameAndImage
+	json.NewDecoder(r.Body).Decode(&req)
+	filter := bson.M{"name": req.Name}
+	var result dbmodels.Image
+
+	err := collectionUsers.FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		log.Println(err)
+	}
+	// log.Println(result)
+
+	json.NewEncoder(w).Encode(result.ProfileImage)
+}
+
+// func UploadImage(w http.ResponseWriter, r *http.Request) {
+// 	r.ParseMultipartForm(10 << 20)
+// 	file, handler, err := r.FormFile("image")
+//
+// 	if err != nil {
+// 		log.Println(err, file, handler)
+// 		json.NewEncoder(w).Encode(err)
+// 		return
+// 	}
+//
+// 	defer file.Close()
+// 	log.Println("UploadImage: filename", handler.Filename)
+// 	log.Println("UploadImage: file size", handler.Size)
+// 	log.Println("UploadImage: MIME header", handler.Header)
+//
+// 	tempFile, err := ioutil.TempFile("temp-images", "*")
+//
+// 	if err != nil {
+// 		log.Println(err)
+// 	}
+// 	defer file.Close()
+//
+// 	fileBytes, err := ioutil.ReadAll(file)
+// 	if err != nil {
+// 		log.Println(err)
+// 	}
+//
+// 	tempFile.Write(fileBytes)
+// 	json.NewEncoder(w).Encode("Everything worked")
+//
+// }
+//
 
 // GetFriends gets all the friends from a user
 func GetFriends(w http.ResponseWriter, r *http.Request) {
