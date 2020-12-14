@@ -3,12 +3,13 @@ package main
 import (
 	_ "encoding/json"
 	"fmt"
-	"github.com/Jonny-exe/go-server/httpd/handler"
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/Jonny-exe/go-server/httpd/handler"
+	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 func handleRequest() {
@@ -31,7 +32,7 @@ func handleRequest() {
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:5000"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 
 		// Enable Debugging for testing, consider disabling in production
 		// To debug turn this to true
