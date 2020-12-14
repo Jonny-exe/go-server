@@ -31,7 +31,8 @@ func handleRequest() {
 	myRouter.HandleFunc("/getprofileimage", handler.GetProfileImage).Methods("POST")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://jonny.sytes.net", "http://192.168.0.19"},
+		AllowedOrigins:   []string{"*"},
+		//AllowedOrigins:   []string{"http://localhost:3000", "http://jonny.sytes.net", "http://192.168.0.19"},
 		AllowCredentials: false,
 
 		// Enable Debugging for testing, consider disabling in production
