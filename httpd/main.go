@@ -34,8 +34,8 @@ func handleRequest() {
 		AllowedOrigins:   []string{"*"},
 		//AllowedOrigins:   []string{"http://localhost:3000", "http://jonny.sytes.net", "http://192.168.0.19"},
 		AllowCredentials: false,
-		AllowedMethods: []string{"POST", "GET", "OPTIONS"}
-		AllowedHeaders: []string{"*"}
+		AllowedMethods: []string{"POST", "GET", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
 
 		// Enable Debugging for testing, consider disabling in production
 		// To debug turn this to true
