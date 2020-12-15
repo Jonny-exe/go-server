@@ -3,6 +3,7 @@ Description=go-messages
 After=network.target
 
 [Service]
+Environment="GO_MESSAGES_DIR=/home/ubuntu/Documents/GitHub/go-server/httpd"
 Type=simple
 Restart=always
 RestartSec=5s
