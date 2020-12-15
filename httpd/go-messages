@@ -1,0 +1,103 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          go-messages
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: golang http server for react-ts-project
+### END INIT INFO
+
+# PATH="/usr/bin:/home/a/Documents/GitHub/go-server/httpd"
+PATH="/usr/bin:/home/ubuntu/Documents/GitHub/go-server/httpd"
+# PROGNAME="/home/a/Documents/GitHub/go-server/httpd/httpd"
+PROGNAME="/home/ubuntu/Documents/GitHub/go-server/httpd/httpd"
+#DESC="This is my go-messages service."
+PIDFILE="/var/run/go-messages.pid"
+# LOGFILES should be in /var/log/go-messages.{log,err}
+LOGFILE="/var/log/go-messages.log"
+
+touch "$LOGFILE" || {
+    echo "$(date +%Y%m%d-%H:%M:%S):: No permissions to write logs to $LOGFILE. Aborting." 2>&1 | tee -a $HOME/go-messages.log
+    exit 1
+}
+
+test -x $PROGNAME || {
+    echo "$(date +%Y%m%d-%H:%M:%S):: Program $PROGNAME does not exist" 2>&1 | tee -a $LOGFILE
+    exit 0
+}
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
+set -e
+
+start_service() {
+    if test -f "$PIDFILE"; then
+        PID=$(cat "$PIDFILE")
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0}: process already running, see pid $PID" 2>&1 | tee -a $LOGFILE
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0}: stop process $PID first" 2>&1 | tee -a $LOGFILE
+    else
+        touch "$PIDFILE" || {
+            echo "$(date +%Y%m%d-%H:%M:%S):: No permissions to write PID file to $PIDFILE. Aborting." 2>&1 | tee -a $LOGFILE
+            exit 1
+        }
+        # cannot do | tee because this would then get wrong  PID
+        $PROGNAME >>$LOGFILE 2>&1 &
+        PID=$!
+        echo $PID >"$PIDFILE"
+        sleep 2
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0} started process. New process has pid $PID." 2>&1 | tee -a $LOGFILE
+    fi
+}
+
+stop_service() {
+    if test -f "$PIDFILE"; then
+        PID=$(cat "$PIDFILE")
+        kill $PID
+        rm "$PIDFILE"
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0} killed process with pid $PID." 2>&1 | tee -a $LOGFILE
+    else
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0} process not running." 2>&1 | tee -a $LOGFILE
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0} no process pid known. Doing a ps ..." 2>&1 | tee -a $LOGFILE
+        ps aux | grep "$PROGNAME" | grep -v "grep " 2>&1 | tee -a $LOGFILE
+    fi
+}
+
+status_service() {
+    if test -f "$PIDFILE"; then
+        PID=$(cat "$PIDFILE")
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0}: process running, see pid $PID" 2>&1 | tee -a $LOGFILE
+        more /proc/$PID/status | head -n 10 2>&1 | tee -a $LOGFILE
+        ps -Flww -p $PID 2>&1 | tee -a $LOGFILE
+    else
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0} process not running." 2>&1 | tee -a $LOGFILE
+        echo "$(date +%Y%m%d-%H:%M:%S):: Debug: ${0} no process pid known. Doing a ps ..." 2>&1 | tee -a $LOGFILE
+        ps aux | grep "$PROGNAME" | grep -v "grep " 2>&1 | tee -a $LOGFILE
+    fi
+}
+
+case "${1}" in
+start)
+    start_service
+    ;;
+stop)
+    stop_service
+    ;;
+restart | force-reload)
+    stop_service
+    sleep 1
+    start_service
+    ;;
+status)
+    status_service
+    ;;
+*)
+    echo "$(date +%Y%m%d-%H:%M:%S):: Usage: ${0} {start|stop|restart|force-reload}" 2>&1 | tee -a $LOGFILE
+    exit 1
+    ;;
+esac
+
+exit 0

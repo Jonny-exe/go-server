@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path"
 	"strconv"
 
 	"github.com/Jonny-exe/go-server/httpd/handler"
@@ -12,8 +14,14 @@ import (
 	"github.com/rs/cors"
 )
 
-func handleRequest() {
-	handler.Connect()
+func handleRequest() error {
+	err := handler.Connect()
+	if err != nil {
+		log.Println("Error: Could NOT connect to database.")
+		log.Println(err)
+		return err
+	}
+
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/test", handler.Base64ToImage).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/addmessage", handler.AddMessage).Methods("POST", "OPTIONS")
@@ -31,11 +39,11 @@ func handleRequest() {
 	myRouter.HandleFunc("/getprofileimage", handler.GetProfileImage).Methods("POST")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins: []string{"*"},
 		//AllowedOrigins:   []string{"http://localhost:3000", "http://jonny.sytes.net", "http://192.168.0.19"},
 		AllowCredentials: false,
-		AllowedMethods: []string{"POST", "GET", "OPTIONS"},
-		AllowedHeaders: []string{"*"},
+		AllowedMethods:   []string{"POST", "GET", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
 
 		// Enable Debugging for testing, consider disabling in production
 		// To debug turn this to true
@@ -46,9 +54,21 @@ func handleRequest() {
 	corsHandler := c.Handler(myRouter)
 	fmt.Println("Listening on port: ", PORT)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(PORT), corsHandler))
-
+	return nil
 }
 
 func main() {
-	handleRequest()
+	ex, err := os.Executable()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print("Executable is ", ex)
+	dir := path.Dir(ex)
+	log.Print("Dir of executable is ", dir)
+	// e.g.: export GO_MESSAGES_DIR="/home/a/Documents/GitHub/go-server/httpd"
+	log.Println("Env variable GO_MESSAGES_DIR is:", os.Getenv("GO_MESSAGES_DIR"))
+	err = handleRequest()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

@@ -16,6 +16,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"image"
 	"image/png"
+	"path"
 	"strings"
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	"bytes"
@@ -531,8 +532,25 @@ var collectionUsers *mongo.Collection
 var collectionMessages *mongo.Collection
 
 // Connect connects to the mongodb db
-func Connect() {
-	enverr := godotenv.Load()
+func Connect() error {
+	var err error
+	ex, err := os.Executable()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print("Executable is ", ex)
+	dir := path.Dir(ex)
+	log.Println("Dir of executable is ", dir)
+
+	// e.g.: export GO_MESSAGES_DIR="/home/a/Documents/GitHub/go-server/httpd"
+	dir = os.Getenv("GO_MESSAGES_DIR")
+	log.Println("Env variable GO_MESSAGES_DIR is: ", dir)
+	if dir == "" {
+		log.Println("Error: GO_MESSAGES_DIR is not set.")
+		log.Println("Error: Set it like: export GO_MESSAGES_DIR=\"/home/user/Documents/GitHub/go-server/httpd\"")
+	}
+
+	enverr := godotenv.Load(dir + "/.env")
 	fmt.Println(enverr)
 	fmt.Println("Connecting to MongoDB")
 	connectionKey := os.Getenv("DB_CONNECTION")
@@ -541,16 +559,18 @@ func Connect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var err error
 	client, err = mongo.NewClient(options.Client().ApplyURI(connectionKey))
 	if err != nil {
+		log.Println("Error: Could NOT connect to database.")
 		log.Println(err)
+		return err
 	}
-	fmt.Println("Connection succesfull")
-	fmt.Println(cancel)
+	log.Println("Connection succesfull")
+	log.Println(cancel)
 	err = client.Connect(ctx)
 	if err != nil {
 		log.Println(err)
+		return err
 	}
 	// Dosent need to be closed, its better not to close i
 	// defer client.Disconnect(ctx)
@@ -558,4 +578,5 @@ func Connect() {
 	database = client.Database("test")
 	collectionMessages = database.Collection("postmessages")
 	collectionUsers = database.Collection("postusers")
+	return nil
 }

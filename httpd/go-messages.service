@@ -1,0 +1,14 @@
+[Unit]
+Description=go-messages
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/home/ubuntu/Documents/GitHub/go-server/httpd/httpd
+StandardOutput=file:/var/log/go-messages.log
+StandardError=file:/var/log/go-messages.err
+
+[Install]
+WantedBy=multi-user.target
