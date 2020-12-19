@@ -79,7 +79,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
 	fmt.Println("Endpoint hit: all user endpoint")
 
-	json.NewEncoder(w).Encode(req)
+	json.NewEncoder(w).Encode(http.StatusOK)
 }
 
 // GetFriendRequests ...
